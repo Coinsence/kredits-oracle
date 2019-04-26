@@ -12,7 +12,9 @@ const promptly = require('promptly');
 
   let wallet = ethers.Wallet.createRandom();
   wallet.encrypt(password).then((walletJSON) => {
-    fs.writeFileSync(path, walletJSON);
+    fs.writeFileSync(path, walletJSON, { flag: 'ax' });
     console.log(`\nWrote encrypted wallet config to ${path}`);
   });
+  console.log('Address: ', wallet.address);
+  console.log('Private key: ', wallet.privateKey);
 })();
