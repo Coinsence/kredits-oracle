@@ -68,7 +68,7 @@ module.exports = function(app, Kredits) {
     console.log(`Received GitHub hook. Event: ${evt}, action: ${data.action}`);
 
     if (evt !== 'pull_request' || data.action !== 'closed' || !data.pull_request.merged) {
-      res.send(200);
+      res.status(200).send('OK');
       return;
     }
 
