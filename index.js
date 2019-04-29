@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 const ethers = require('ethers');
+const morgan = require('morgan');
 const Kredits = require('kredits-contracts');
 
 const Config = require('./config');
@@ -12,25 +13,13 @@ const integrations = require('./integrations');
 
 (async function() {
   const app = express();
+  app.use(morgan('common'));
   app.set('view engine', 'pug');
   app.use(express.static(path.join(__dirname, 'public')));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(session({secret: 'kredits-oracle-45ad32906b7', saveUninitialized: true, resave: true}));
 
-  const grantConfig = {
-    "defaults": {
-      "protocol": "http",
-      "host": "localhost:3000",
-      "transport": "session"
-    },
-    "github": {
-      "key": "Iv1.430dc02dc0037aa4",
-      "secret": "426ffa0a3f0a78d0a79b2722fd46b87d171cb79e",
-      "scope": ["user", "public_repo"],
-      "callback": "/github/setup"
-    }
-  }
   app.use(grant(Config.grant));
 
   let wallet;

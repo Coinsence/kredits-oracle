@@ -6,10 +6,10 @@ const OctokitApp = require('@octokit/app');
 const Config = require('../../config');
 
 const PullRequest = require('./pull-request');
-const GitHubApp = new OctokitApp({ id: Config.github.appId, privateKey: Config.github.appPrivateKey });
-const GitHub = Octokit({ auth: GitHubApp.getSignedJsonWebToken() });
 
 function octokitFor (loginOrOrg) {
+  const GitHubApp = new OctokitApp({ id: Config.github.appId, privateKey: Config.github.appPrivateKey });
+  const GitHub = Octokit({ auth: GitHubApp.getSignedJsonWebToken() });
   return GitHub.apps.listInstallations().then(response => {
     const installation = response.data.find(i => i.account.login.toLowerCase() === loginOrOrg.toLowerCase());
     if (installation) {
@@ -204,6 +204,12 @@ module.exports = function(app, options) {
               repo: repoName,
               issue_number: pullRequest.number,
               labels: [ Config.github.claimedLabel ]
+            });
+            octokit.issues.createComment({
+              owner: ownerLogin,
+              repo: repoName,
+              issue_number: pullRequest.number,
+              body: `Great! ${pullRequest.amount} Kredits are on the way to you. Thanks for your contribution.`
             });
           });
         } else {
