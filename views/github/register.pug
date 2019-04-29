@@ -1,0 +1,19 @@
+html
+  head
+    title Kredits oracle
+  body
+    h1 Register as contributor
+
+    p Hello #{name}, we are happy to have you as contributor!
+    p Thanks for your contribution: #{pullRequest.description}
+
+    form(method="post" action="/github/register")
+      if contributor
+        p your contributor ID: #{contributor.id}
+        P your Ethereum account: #{contributor.account}
+      else
+        p To claim your Kredits please provide your Ethereum address:
+        label(for="address") Address
+        input(name="account" type="text" required="true")
+
+      input(type="submit" value="Claim" name="claim")

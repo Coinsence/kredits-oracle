@@ -1,37 +1,49 @@
 const express = require('express');
+const session = require('express-session');
+const grant = require('grant-express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const fetch = require('node-fetch');
+const path = require('path');
 const ethers = require('ethers');
 const Kredits = require('kredits-contracts');
-const integrations = require('./integrations');
 
-const daoAddress = process.env.DAO_ADDRESS;
-const apmDomain = process.env.APM_DOMAIN || 'open.aragonpm.eth';
-const port = process.env.PORT || 3000;
-const ipfsConfig = {
-  host: process.env.IPFS_API_HOST || 'localhost',
-  port: process.env.IPFS_API_PORT || '5001',
-  protocol: process.env.IPFS_API_PROTOCOL || 'http'
-};
+const Config = require('./config');
+const integrations = require('./integrations');
 
 (async function() {
   const app = express();
+  app.set('view engine', 'pug');
+  app.use(express.static(path.join(__dirname, 'public')));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(session({secret: 'kredits-oracle-45ad32906b7', saveUninitialized: true, resave: true}));
+
+  const grantConfig = {
+    "defaults": {
+      "protocol": "http",
+      "host": "localhost:3000",
+      "transport": "session"
+    },
+    "github": {
+      "key": "Iv1.430dc02dc0037aa4",
+      "secret": "426ffa0a3f0a78d0a79b2722fd46b87d171cb79e",
+      "scope": ["user", "public_repo"],
+      "callback": "/github/setup"
+    }
+  }
+  app.use(grant(Config.grant));
 
   let wallet;
-  if (process.env.KREDITS_WALLET_PRIV_KEY) {
-    wallet = new ethers.Wallet(process.env.KREDITS_WALLET_PRIV_KEY);
+  if (Config.wallet.privateKey) {
+    wallet = new ethers.Wallet(Config.wallet.privateKey);
   } else {
-    const walletPath  = process.env.KREDITS_WALLET_PATH || './wallet.json';
+    const walletPath  = Config.wallet.path;
     const walletJson  = fs.readFileSync(walletPath);
-    wallet = await ethers.Wallet.fromEncryptedJson(walletJson, process.env.KREDITS_WALLET_PASSWORD);
+    wallet = await ethers.Wallet.fromEncryptedJson(walletJson, Config.wallet.password);
   }
-  const ethProviderUrl = process.env.ETH_PROVIDER_URL;
   let ethProvider;
-  if (ethProviderUrl) {
-    ethProvider = new ethers.providers.JsonRpcProvider(ethProviderUrl);
+  if (Config.ethProviderUrl) {
+    ethProvider = new ethers.providers.JsonRpcProvider(Config.ethProviderUrl);
   } else {
     ethProvider = new ethers.getDefaultProvider('rinkeby');
   }
@@ -40,10 +52,9 @@ const ipfsConfig = {
   let kredits;
   try {
     kredits = await new Kredits(signer.provider, signer, {
-      addresses: { Kernel: daoAddress },
-      // TODO support local devchain custom address
-      apm: apmDomain,
-      ipfsConfig
+      addresses: { Kernel: Config.daoAddress },
+      apm: Config.apmDomain,
+      ipfsConfig: Config.ipfs
     }).init();
   } catch(error) {
     console.error('Could not set up kredits:', error);
@@ -60,8 +71,8 @@ const ipfsConfig = {
   });
 
   Object.keys(integrations).forEach(service => {
-    integrations[service](app, kredits);
+    integrations[service](app, { kredits });
   });
-  app.listen(port, () => console.log(`Oracle listening on port ${port}`));
+  app.listen(Config.port, () => console.log(`Oracle listening on port ${Config.port}`));
 })();
 

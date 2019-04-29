@@ -1,0 +1,14 @@
+html
+  head
+    title Kredits oracle
+  body
+    h1 Claim invalid
+
+    if error
+      h2= error
+
+    if pullRequest && pullRequest.claimed
+      p This pull request has already been claimed
+
+    if pullRequest && !pullRequest.amount > 0
+      p No Kredits for this pull request

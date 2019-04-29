@@ -1,0 +1,8 @@
+html
+  head
+    title Kredits oracle
+  body
+    h1 Thanks for your contribution to #{pullRequest.repoFullName}
+    p You can claim #{pullRequest.amount} Kredits for your contribution: <i>#{pullRequest.data.title}</i>
+
+    a(href="/connect/github") Claim your Kredits now
